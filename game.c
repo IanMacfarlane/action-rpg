@@ -369,10 +369,20 @@ int main(void)
                     }
                     else {
                         // move straight up down left or right
-                        if (pathLength == height && ballTarget.y < ballPosition.y) pen.y--;
-                        else if (pathLength == height && ballTarget.y > ballPosition.y) pen.y++;
-                        else if (pathLength == width && ballTarget.x < ballTarget.y) pen.x--;
-                        else if (pathLength == width && ballTarget.x > ballTarget.y) pen.x++;
+                        if (pathLength == height && ballTarget.y < ballPosition.y) {// down 
+                            pen.y--;
+                        }
+                        else if (pathLength == height && ballTarget.y > ballPosition.y) {// up
+                            pen.y++;
+                        }
+                        else if (pathLength == width && ballTarget.x < ballPosition.x) {// left
+                            direction = 0;
+                            pen.x--;
+                        }
+                        else if (pathLength == width && ballTarget.x > ballPosition.x) {// right
+                            direction = 1;
+                            pen.x++;
+                        }
                     }
                 }
             }
@@ -385,21 +395,19 @@ int main(void)
 
             ClearBackground(DARKGRAY);
             
-            
-            
-            //DrawCircleV(ballPosition, 20, BLACK);
-            if (direction == 1) {
+            if (direction == 1) {// move right
                 position.x = ballPosition.x - 22*2;
                 position.y = ballPosition.y - 25*2;
                 DrawTextureRec(rollerbotMoveRight, rollerbotMoveRightRec, position, WHITE);
             }
-            else if (direction == 0) {
+            else if (direction == 0) {// move left
                 position.x = ballPosition.x - 95*2;
                 position.y = ballPosition.y - 25*2;
                 DrawTextureRec(rollerbotMoveLeft, rollerbotMoveLeftRec, position, WHITE);
             }
-            
-            
+            // TODO if not moving idle
+            // TODO if havent moved for amount of time reverse wake animation to static idle
+            // TODO on move from static idle wake animation before move
             
             DrawText("right click to move", 10, 10, 20, BLACK);
 
