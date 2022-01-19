@@ -22,8 +22,20 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "Game (in progress)");
+    
+    // sprite stuff
+    Texture2D rollerbotMoveRight = LoadTexture("resources/rollerbotMoveRight.png");// load move right texture
+    Texture2D rollerbotMoveLeft = LoadTexture("resources/rollerbotMoveLeft.png");// load move left texture
+    
+    Vector2 position;
+    Rectangle frameRec = { 0.0f, 0.0f, (float)rollerbotMoveRight.width/8, (float)rollerbotMoveRight.height };
+    int currentFrame = 0;
+    
+    int framesCounter = 0;
+    int framesSpeed = 8;
 
-    Vector2 ballPosition = { screenWidth/2, screenHeight/2 };
+    // movement variables
+    Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; 
     Vector2 ballTarget = ballPosition;
     Vector2 pathArray [screenWidth];
     int pathLength = 0;
@@ -37,6 +49,18 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        framesCounter++;
+        
+        // sprite animation TODO if movine left change texture
+        if (framesCounter >= (60/framesSpeed)) {
+            framesCounter = 0;
+            currentFrame++;
+            
+            if (currentFrame > 7) currentFrame = 0;
+            
+            frameRec.x = (float)currentFrame*(float)rollerbotMoveRight.width/8;
+        }
+        
         
         // shortest path movement algorithm TODO if obstacle calculate path around obstacle
         // TODO if ballPosition is not equal to ballTarget keep moving towards target
@@ -351,15 +375,18 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
-            /*if (pathLength != 0) {
-                for (int i = 0; i < pathLength; i++) {
-                    DrawPixel(pathArray[i].x, pathArray[i].y, BLACK);         
-                }
-            }*/
 
             ClearBackground(DARKGRAY);
-            DrawCircleV(ballPosition, 20, BLACK);
+            
+            
+            
+            //DrawCircleV(ballPosition, 20, BLACK);
+            position.x = ballPosition.x - 23*2;
+            position.y = ballPosition.y - 24*2;
+            DrawTextureRec(rollerbotMoveRight, frameRec, position, WHITE);
+            
+            
+            
             DrawText("right click to move", 10, 10, 20, BLACK);
 
         EndDrawing();
@@ -368,6 +395,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadTexture(rollerbotMoveRight);
+    UnloadTexture(rollerbotMoveLeft);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
