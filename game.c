@@ -26,7 +26,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "Game (in progress)");
     
     // sprite stuff
-    int direction = 1;
+    int direction = 1;// 0 for left 1 for right
     Texture2D rollerbotStaticIdleRight = LoadTexture("resources/rollerbotStaticIdleRight.png");
     Texture2D rollerbotStaticIdleLeft = LoadTexture("resources/rollerbotStaticIdleLeft.png");
     
@@ -47,22 +47,21 @@ int main(void)
     Rectangle rollerbotStaticIdleRightRec = { 0.0f, 0.0f, (float)rollerbotStaticIdleRight.width, (float)rollerbotStaticIdleRight.height };
     Rectangle rollerbotWakeRightRec = { 0.0f, 0.0f, (float)rollerbotWakeRight.width/5, (float)rollerbotWakeRight.height };
     
-    int currentFrame = 0;
-    //if (direction == 0) currentFrame = 4;
+    int currentFrame = 0;// tracks animation frame
     
-    int framesCounter = 0;
-    int framesSpeed = 6;
-    int moveSpeed = 3;
+    int framesCounter = 0;// tracks animation frames per second
+    int framesSpeed = 6;// determines number of animation frames per second
+    int moveSpeed = 3;// pixels moved per frame
 
     // movement variables
-    Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; 
-    Vector2 ballTarget = ballPosition;
-    Vector2 pathArray [screenWidth];
+    Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; // TODO should probably rename these?
+    Vector2 ballTarget = ballPosition;// tracks top left corner of character textures
+    Vector2 pathArray [screenWidth];// tracks movement path to mouse click location
     int pathLength = 0;// used to track the end of the the pathArray
     int pathPosition;// track int location on pathArray while moving
     
-    int moving = 0;
-    int awake = 0;
+    int moving = 0;// 0 for not moving, 1 for moving
+    int awake = 0;// 0 for sleeping in static idle 1 for in wake animation 2 for finished animation and is now idle
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -74,38 +73,36 @@ int main(void)
         //----------------------------------------------------------------------------------
         framesCounter++;
         
-        // sprite animation
+        // sprite animation frame tracking
         if (framesCounter >= (60/framesSpeed)) {
             framesCounter = 0;
             
-            if (direction == 1) currentFrame++;// TODO if moving left reverse animation direction currentFrame--
-            else if (direction == 0) currentFrame--;
+            if (direction == 1) currentFrame++;
+            else if (direction == 0) currentFrame--; // if moving left must reverse animation because frames are in reverse order from right
             
-            if (moving == 1) {
-                if (direction == 1) {
-                    if (currentFrame > 7) currentFrame = 0;
+            if (moving == 1) {// walk animation
+                if (direction == 1) {// right
+                    if (currentFrame > 7) currentFrame = 0;// loop walk animation
                     rollerbotMoveRightRec.x = (float)currentFrame*(float)rollerbotMoveRight.width/8;
                 }
-                else if (direction == 0) {
-                    if (currentFrame < 0) currentFrame = 7;
+                else if (direction == 0) {// left
+                    if (currentFrame < 0) currentFrame = 7;// loop walk animation
                     rollerbotMoveLeftRec.x = (float)currentFrame*(float)rollerbotMoveLeft.width/8;
                 }
             }
-            else if (awake == 1) {
-                // wake animation
-                if (currentFrame > 4) awake = 2;
-                if (direction == 1) {
+            else if (awake == 1) {// wake animation
+                if (direction == 1) {// right
+                    if (currentFrame > 4) awake = 2;// end wake animation
                     rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeRight.width/5;
                 }
-                else if (direction == 0) {
-                    if (currentFrame < 0) awake = 2;
+                else if (direction == 0) {// left
+                    if (currentFrame < 0) awake = 2;// end wake animation
                     rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
                 }
             }
         }
         
-        // shortest path movement algorithm TODO if obstacle calculate path around obstacle
-        // if ballPosition is not equal to ballTarget keep moving towards target
+        // move character position down movement path toward right click location
         if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
             
             // keep moving down path
@@ -113,29 +110,31 @@ int main(void)
                 
                 moving = 1;
                 
-                // TODO character moves faster on 45 than on flat could do some math to make movement look the same speed at any angle?
                 if ((pathLength-1) - pathPosition > moveSpeed) {
                     pathPosition+=moveSpeed;
                 }
-                else {// at end of path
+                else {// at end of path, avoids overflowing pathArray
                     pathPosition = pathLength-1;
                     moving = 0;
+                    // TODO start timer for sleep animation back to static idle
                 }
                 ballPosition = pathArray[pathPosition];
             }
-            else if (awake == 0) {
+            else if (awake == 0) {// if in static idle must first do awake animation before moving
                 awake = 1;
                 if (direction == 1) {
                     currentFrame = 0;
                 }
                 else if (direction == 0) {
-                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
+                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
                     currentFrame = 4;
                 }
             }
         }
         
         // TODO need to put this in its own movement click function I think
+        // TODO if obstacle calculate path around obstacle
+        // right click mouse movement 
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
             ballTarget = GetMousePosition();
             pathPosition = 0;
@@ -451,22 +450,20 @@ int main(void)
 
             ClearBackground(DARKGRAY);
             
-            if (moving == 1) {
-                if (direction == 1) {// move right animation
+            if (moving == 1) {// move animation
+                if (direction == 1) {// right
                     position.x = ballPosition.x - 22*2;
                     position.y = ballPosition.y - 25*2;
                     DrawTextureRec(rollerbotMoveRight, rollerbotMoveRightRec, position, WHITE);
                 }
-                else if (direction == 0) {// move left animation
+                else if (direction == 0) {// left
                     position.x = ballPosition.x - 189;
                     position.y = ballPosition.y - 25*2;
                     DrawTextureRec(rollerbotMoveLeft, rollerbotMoveLeftRec, position, WHITE);
                 }
             }
             else if (moving == 0) {
-                // TODO on stop and start moving run wake animation before moving
-                if (awake == 0) {
-                // idle animation
+                if (awake == 0) {// static idle
                     if (direction == 1) {
                         position.x = ballPosition.x - 22*2;
                         position.y = ballPosition.y - 25*2;
@@ -478,7 +475,7 @@ int main(void)
                         DrawTextureRec(rollerbotStaticIdleLeft, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                 }
-                else if (awake == 1) {
+                else if (awake == 1) {// wake animation
                     if (direction == 1) {
                         position.x = ballPosition.x - 22*2;
                         position.y = ballPosition.y - 25*2;
@@ -490,7 +487,7 @@ int main(void)
                         DrawTextureRec(rollerbotWakeLeft, rollerbotWakeRightRec, position, WHITE);
                     }
                 }
-                else if (awake == 2) {
+                else if (awake == 2) {// idle
                     if (direction == 1) {
                         position.x = ballPosition.x - 22*2;
                         position.y = ballPosition.y - 25*2;
@@ -504,11 +501,13 @@ int main(void)
                 }
             }
             
+            // TODO if awake == 2 and move == 0 for amount of time reverse wake animation to static idle
             // TODO placeholder enemies that on right click charge and shoot animation
-            // TODO if awake == 1 and havent move == 0 for amount of time reverse wake animation to static idle
+            
+            // TODO character moves faster on 45 than on flat could do some math to make movement look the same speed at any angle?
             // TODO could have a hold right click update movement target at some rate
-            // TODO on change direction reset currentFrame
-            // TODO on stop moving could make transition from move animation complete before switching to idle?
+            // TODO on change direction reset move animation currentFrame
+            // TODO on stop moving could finish move animation before switching to idle?
             
             DrawText("right click to move", 10, 10, 20, BLACK);
 
@@ -525,6 +524,7 @@ int main(void)
     UnloadTexture(rollerbotWakeLeft);
     UnloadTexture(rollerbotIdleLeft);
     UnloadTexture(rollerbotIdleRight);
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
