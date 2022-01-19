@@ -24,11 +24,13 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "Game (in progress)");
     
     // sprite stuff
+    int direction = 1;
     Texture2D rollerbotMoveRight = LoadTexture("resources/rollerbotMoveRight.png");// load move right texture
     Texture2D rollerbotMoveLeft = LoadTexture("resources/rollerbotMoveLeft.png");// load move left texture
     
     Vector2 position;
-    Rectangle frameRec = { 0.0f, 0.0f, (float)rollerbotMoveRight.width/8, (float)rollerbotMoveRight.height };
+    Rectangle rollerbotMoveRightRec = { 0.0f, 0.0f, (float)rollerbotMoveRight.width/8, (float)rollerbotMoveRight.height };
+    Rectangle rollerbotMoveLeftRec = { 0.0f, 0.0f, (float)rollerbotMoveLeft.width/8, (float)rollerbotMoveLeft.height };// TODO not sure if I need this
     int currentFrame = 0;
     
     int framesCounter = 0;
@@ -58,7 +60,8 @@ int main(void)
             
             if (currentFrame > 7) currentFrame = 0;
             
-            frameRec.x = (float)currentFrame*(float)rollerbotMoveRight.width/8;
+            rollerbotMoveRightRec.x = (float)currentFrame*(float)rollerbotMoveRight.width/8;
+            rollerbotMoveLeftRec.x = (float)currentFrame*(float)rollerbotMoveLeft.width/8;
         }
         
         
@@ -297,6 +300,7 @@ int main(void)
                     
                     // fill array with points on path
                     if (ballPosition.x - ballTarget.x > 0 && ballPosition.y - ballTarget.y > 0) {// move up and left
+                        direction = 0;
                         if (pathLength == height) {// moving in y direction
                             pen.y--;
                             if (lengthsArray[currentLength] == 0) {
@@ -313,6 +317,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x < 0 && ballPosition.y - ballTarget.y > 0) {// move up and right
+                        direction = 1;
                         if (pathLength == height) {// moving in y direction
                             pen.y--;
                             if (lengthsArray[currentLength] == 0) {
@@ -329,6 +334,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x < 0 && ballPosition.y - ballTarget.y < 0) {//move down and right
+                        direction = 1;
                         if (pathLength == height) {// moving in y direction
                             pen.y++;
                             if (lengthsArray[currentLength] == 0) {
@@ -345,6 +351,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x > 0 && ballPosition.y - ballTarget.y < 0) {//move down and left
+                        direction = 0;
                         if (pathLength == height) {// moving in y direction
                             pen.y++;
                             if (lengthsArray[currentLength] == 0) {
@@ -381,9 +388,16 @@ int main(void)
             
             
             //DrawCircleV(ballPosition, 20, BLACK);
-            position.x = ballPosition.x - 23*2;
-            position.y = ballPosition.y - 24*2;
-            DrawTextureRec(rollerbotMoveRight, frameRec, position, WHITE);
+            if (direction == 1) {
+                position.x = ballPosition.x - 22*2;
+                position.y = ballPosition.y - 25*2;
+                DrawTextureRec(rollerbotMoveRight, rollerbotMoveRightRec, position, WHITE);
+            }
+            else if (direction == 0) {
+                position.x = ballPosition.x - 95*2;
+                position.y = ballPosition.y - 25*2;
+                DrawTextureRec(rollerbotMoveLeft, rollerbotMoveLeftRec, position, WHITE);
+            }
             
             
             
