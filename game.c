@@ -31,17 +31,17 @@ int main(void)
     Texture2D rollerbotStaticIdleRight = LoadTexture("resources/rollerbotStaticIdleRight.png");
     Texture2D rollerbotStaticIdleLeft = LoadTexture("resources/rollerbotStaticIdleLeft.png");
     
-    Texture2D rollerbotIdleRight = LoadTexture("resources/rollerbotIdleRight.png");
-    Texture2D rollerbotIdleLeft = LoadTexture("resources/rollerbotIdleLeft.png");
-    
     Texture2D rollerbotWakeRight = LoadTexture("resources/rollerbotWakeRight.png");
     Texture2D rollerbotWakeLeft = LoadTexture("resources/rollerbotWakeLeft.png");
+    
+    Texture2D rollerbotIdleRight = LoadTexture("resources/rollerbotIdleRight.png");
+    Texture2D rollerbotIdleLeft = LoadTexture("resources/rollerbotIdleLeft.png");
     
     Texture2D rollerbotMoveRight = LoadTexture("resources/rollerbotMoveRight.png");
     Texture2D rollerbotMoveLeft = LoadTexture("resources/rollerbotMoveLeft.png");
     
     
-    Vector2 position;
+    Vector2 position;// tracks top left of sprite textures
     // TODO may not need a rec for each direction
     Rectangle rollerbotMoveRightRec = { 0.0f, 0.0f, (float)rollerbotMoveRight.width/8, (float)rollerbotMoveRight.height };
     Rectangle rollerbotMoveLeftRec = { 0.0f, 0.0f, (float)rollerbotMoveLeft.width/8, (float)rollerbotMoveLeft.height };
@@ -57,7 +57,7 @@ int main(void)
     int moveSpeed = 3;// pixels moved per frame
 
     // movement variables
-    Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; // TODO should probably rename these?
+    Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; // tracks location of feet of sprite
     Vector2 ballTarget = ballPosition;// tracks top left corner of character textures
     Vector2 pathArray [screenWidth];// tracks movement path to mouse click location
     int pathLength = 0;// used to track the end of the the pathArray
@@ -82,7 +82,7 @@ int main(void)
             framesCounter = 0;
             
             if (moving == 1) {// walk animation
-                // TODO could probably just find a way to reorder left animations so I dont have to reverse the frame counter
+                // TODO could probably just find a way to reorder left animations so I dont have to reverse the frame counter and do frame adjustements on direction change
                 if (direction == 1) currentFrame++;
                 else if (direction == 0) currentFrame--;
             
@@ -556,6 +556,7 @@ int main(void)
                 }
             }
             else if (awake == 0) {// if in static idle must first do awake animation before moving
+                // TODO on direction change while asleep could display animation frame of changed direction before wake animation?
                 awake = 1;
                 framesCounter = 0;
                 if (direction == 1) {
@@ -692,13 +693,17 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(rollerbotMoveRight);
-    UnloadTexture(rollerbotMoveLeft);
     UnloadTexture(rollerbotStaticIdleRight);
+    UnloadTexture(rollerbotStaticIdleLeft);
+    
     UnloadTexture(rollerbotWakeRight);
     UnloadTexture(rollerbotWakeLeft);
-    UnloadTexture(rollerbotIdleLeft);
+    
     UnloadTexture(rollerbotIdleRight);
+    UnloadTexture(rollerbotIdleLeft);
+    
+    UnloadTexture(rollerbotMoveRight);
+    UnloadTexture(rollerbotMoveLeft);
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
