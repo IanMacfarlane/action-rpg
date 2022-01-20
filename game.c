@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// TODO need to clean up my code it is pretty messy right now and definitely uses more lines than I think it needs too.
+// TODO need to clean up my code and split it up into functions and classes instead of leaving everything in main.
 
 int main(void)
 {
@@ -82,7 +82,7 @@ int main(void)
             framesCounter = 0;
             
             if (moving == 1) {// walk animation
-                // TODO should probably just find a way to reorder left animations so I dont have to reverse the frame counter
+                // TODO could probably just find a way to reorder left animations so I dont have to reverse the frame counter
                 if (direction == 1) currentFrame++;
                 else if (direction == 0) currentFrame--;
             
@@ -466,7 +466,77 @@ int main(void)
                 
                 moving = 1;
                 
-                // TODO should probably do the same frame adjustment as with sleep animation cancel on direction change during move
+                // adjust frame on move direction change
+                if (prevDirection != direction) {
+                    if (prevDirection == 1) {
+                        if (currentFrame == 0) {
+                            rollerbotWakeLeftRec.x = (float)7*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 7;
+                        }
+                        else if (currentFrame == 1) {
+                            rollerbotWakeLeftRec.x = (float)6*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 6;
+                        }
+                        else if (currentFrame == 2) {
+                            rollerbotWakeLeftRec.x = (float)5*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 5;
+                        }
+                        else if (currentFrame == 3) {
+                            rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 4;
+                        }
+                        else if (currentFrame == 4) {
+                            rollerbotWakeLeftRec.x = (float)3*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 3;
+                        }
+                        else if (currentFrame == 5) {
+                            rollerbotWakeLeftRec.x = (float)2*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 2;
+                        }
+                        else if (currentFrame == 6) {
+                            rollerbotWakeLeftRec.x = (float)1*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 1;
+                        }
+                        else if (currentFrame == 7) {
+                            rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 0;
+                        }
+                    }
+                    if (prevDirection == 0) {
+                        if (currentFrame == 0) {
+                            rollerbotWakeRightRec.x = (float)7*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 7;
+                        }
+                        else if (currentFrame == 1) {
+                            rollerbotWakeRightRec.x = (float)6*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 6;
+                        }
+                        else if (currentFrame == 2) {
+                            rollerbotWakeRightRec.x = (float)5*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 5;
+                        }
+                        else if (currentFrame == 3) {
+                            rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 4;
+                        }
+                        else if (currentFrame == 4) {
+                            rollerbotWakeRightRec.x = (float)3*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 3;
+                        }
+                        else if (currentFrame == 5) {
+                            rollerbotWakeRightRec.x = (float)2*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 2;
+                        }
+                        else if (currentFrame == 6) {
+                            rollerbotWakeRightRec.x = (float)1*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 1;
+                        }
+                        else if (currentFrame == 7) {
+                            rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 0;
+                        }
+                    }
+                }
                 
                 if ((pathLength-1) - pathPosition > moveSpeed) {
                     pathPosition+=moveSpeed;
@@ -476,14 +546,16 @@ int main(void)
                     // TODO should probably check why pathArray[pathLength-1] != ballTarget apparently
                     ballPosition.x = ballTarget.x;
                     ballPosition.y = ballTarget.y;
+                    
                     moving = 0;
+                    currentFrame = 0;// after stoping reset move frame so that movement always starts on first frame
+                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeRight.width/5;
                     
                     // reset sleep timer
                     sleepTimer = 0;
                 }
             }
             else if (awake == 0) {// if in static idle must first do awake animation before moving
-                //DrawText("Interrupt?", 400, 10, 20, BLACK);
                 awake = 1;
                 framesCounter = 0;
                 if (direction == 1) {
@@ -497,10 +569,8 @@ int main(void)
             }
             else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
                 awake = 1;
-                //framesCounter = 0;
                 // if direction change need to adjust currentFrame
                 if (prevDirection != direction) {
-                    //DrawText("change direction", 400, 10, 20, BLACK);
                     if (prevDirection == 1) {
                         if (currentFrame == 0) {
                             rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
@@ -609,13 +679,10 @@ int main(void)
                 }
             }
             
-            // TODO if awake == 2 and move == 0 for amount of time reverse wake animation to static idle
             // TODO placeholder enemies that on right click charge and shoot animation
             
             // TODO character moves faster on 45 than on flat could do some math to make movement look the same speed at any angle?
             // TODO could have a hold right click update movement target at some rate
-            // TODO on change direction reset move animation currentFrame and/or reset framesCounter
-            // TODO on stop moving could finish move animation before switching to idle?
             
             DrawText("right click to move", 10, 10, 20, BLACK);
 
