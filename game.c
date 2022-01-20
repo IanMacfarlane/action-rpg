@@ -61,7 +61,8 @@ int main(void)
     int pathPosition;// track int location on pathArray while moving
     
     int moving = 0;// 0 for not moving, 1 for moving
-    int awake = 0;// 0 for sleeping in static idle 1 for in wake animation 2 for finished animation and is now idle
+    int awake = 0;// 0 for sleeping in static idle 1 for in wake animation 2 for finished animation and is now idle 3 for in sleep animation
+    int sleepTimer = 0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -77,10 +78,11 @@ int main(void)
         if (framesCounter >= (60/framesSpeed)) {
             framesCounter = 0;
             
-            if (direction == 1) currentFrame++;
-            else if (direction == 0) currentFrame--; // if moving left must reverse animation because frames are in reverse order from right
-            
             if (moving == 1) {// walk animation
+                // TODO should probably just find a way to reorder left animations so I dont have to reverse the frame counter
+                if (direction == 1) currentFrame++;
+                else if (direction == 0) currentFrame--;
+            
                 if (direction == 1) {// right
                     if (currentFrame > 7) currentFrame = 0;// loop walk animation
                     rollerbotMoveRightRec.x = (float)currentFrame*(float)rollerbotMoveRight.width/8;
@@ -91,6 +93,8 @@ int main(void)
                 }
             }
             else if (awake == 1) {// wake animation
+                if (direction == 1) currentFrame++;
+                else if (direction == 0) currentFrame--;
                 if (direction == 1) {// right
                     if (currentFrame > 4) awake = 2;// end wake animation
                     rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeRight.width/5;
@@ -100,11 +104,42 @@ int main(void)
                     rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
                 }
             }
+            else if (awake == 3) {// sleep animation
+                if (direction == 1) currentFrame--;
+                else if (direction == 0) currentFrame++;
+                
+                if (direction == 1) {// right
+                    if (currentFrame < 0) awake = 0;// end sleep animation
+                    rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeRight.width/5;
+                }
+                else if (direction == 0) {// left
+                    if (currentFrame > 4) awake = 0;// end sleep animation
+                    rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
+                }
+            }
+        }
+        
+        // sleep timer
+        if (moving == 0 && awake == 2) {
+            // iterate sleep timer
+            sleepTimer++;
+            // if timer reaches threshold set awake = 3 to start sleep animation
+            if (sleepTimer == 60*2) {// sleep after 2 seconds of not moving
+                awake = 3;
+                // set starting frame for sleep animation
+                if (direction == 1) {
+                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
+                    currentFrame = 4;
+                }
+                else if (direction == 0) {
+                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                    currentFrame = 0;
+                }
+            }
         }
         
         // move character position down movement path toward right click location
         if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
-            
             // keep moving down path
             if (pathPosition < pathLength-1 && awake == 2) {
                 
@@ -112,13 +147,17 @@ int main(void)
                 
                 if ((pathLength-1) - pathPosition > moveSpeed) {
                     pathPosition+=moveSpeed;
+                    ballPosition = pathArray[pathPosition];
                 }
                 else {// at end of path, avoids overflowing pathArray
-                    pathPosition = pathLength-1;
+                    // TODO should probably check why pathArray[pathLength-1] != ballTarget apparently
+                    ballPosition.x = ballTarget.x;
+                    ballPosition.y = ballTarget.y;
                     moving = 0;
-                    // TODO start timer for sleep animation back to static idle
+                    
+                    // reset sleep timer
+                    sleepTimer = 0;
                 }
-                ballPosition = pathArray[pathPosition];
             }
             else if (awake == 0) {// if in static idle must first do awake animation before moving
                 awake = 1;
@@ -129,6 +168,10 @@ int main(void)
                     rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
                     currentFrame = 4;
                 }
+            }
+            else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
+                awake = 1;
+                // TODO if direction change need to adjust currentFrame
             }
         }
         
@@ -475,7 +518,7 @@ int main(void)
                         DrawTextureRec(rollerbotStaticIdleLeft, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                 }
-                else if (awake == 1) {// wake animation
+                else if (awake == 1 || awake == 3) {// wake animation
                     if (direction == 1) {
                         position.x = ballPosition.x - 22*2;
                         position.y = ballPosition.y - 25*2;
