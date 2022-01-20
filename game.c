@@ -45,7 +45,9 @@ int main(void)
     Rectangle rollerbotMoveRightRec = { 0.0f, 0.0f, (float)rollerbotMoveRight.width/8, (float)rollerbotMoveRight.height };
     Rectangle rollerbotMoveLeftRec = { 0.0f, 0.0f, (float)rollerbotMoveLeft.width/8, (float)rollerbotMoveLeft.height };
     Rectangle rollerbotStaticIdleRightRec = { 0.0f, 0.0f, (float)rollerbotStaticIdleRight.width, (float)rollerbotStaticIdleRight.height };
+    
     Rectangle rollerbotWakeRightRec = { 0.0f, 0.0f, (float)rollerbotWakeRight.width/5, (float)rollerbotWakeRight.height };
+    Rectangle rollerbotWakeLeftRec = { 0.0f, 0.0f, (float)rollerbotWakeRight.width/5, (float)rollerbotWakeLeft.height };
     
     int currentFrame = 0;// tracks animation frame
     
@@ -101,7 +103,7 @@ int main(void)
                 }
                 else if (direction == 0) {// left
                     if (currentFrame < 0) awake = 2;// end wake animation
-                    rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
+                    rollerbotWakeLeftRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
                 }
             }
             else if (awake == 3) {// sleep animation
@@ -114,17 +116,17 @@ int main(void)
                 }
                 else if (direction == 0) {// left
                     if (currentFrame > 4) awake = 0;// end sleep animation
-                    rollerbotWakeRightRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
+                    rollerbotWakeLeftRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
                 }
             }
         }
         
         // sleep timer
-        if (moving == 0 && awake == 2) {
+        /*if (moving == 0 && awake == 2) {
             // iterate sleep timer
             sleepTimer++;
             // if timer reaches threshold set awake = 3 to start sleep animation
-            if (sleepTimer == 60*2) {// sleep after 2 seconds of not moving
+            if (sleepTimer == 60*1) {// sleep after 2 seconds of not moving
                 awake = 3;
                 // set starting frame for sleep animation
                 if (direction == 1) {
@@ -136,7 +138,7 @@ int main(void)
                     currentFrame = 0;
                 }
             }
-        }
+        }*/
         
         // move character position down movement path toward right click location
         if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
@@ -156,23 +158,37 @@ int main(void)
                     moving = 0;
                     
                     // reset sleep timer
-                    sleepTimer = 0;
+                    //sleepTimer = 0;
+                    awake = 3;
+                    // set starting frame for sleep animation
+                    framesCounter = 0;
+                    if (direction == 1) {
+                        rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeRight.width/5;
+                        currentFrame = 4;
+                    }
+                    else if (direction == 0) {
+                        rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                        currentFrame = 0;
+                    }
                 }
             }
-            else if (awake == 0) {// if in static idle must first do awake animation before moving
+            else if (awake == 0) {// if in static idle must first do awake animation before moving// TODO might need to put this in the animation frame loop
+                DrawText("Interrupt?", 400, 10, 20, BLACK);
                 awake = 1;
+                framesCounter = 0;
                 if (direction == 1) {
+                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
                     currentFrame = 0;
                 }
                 else if (direction == 0) {
-                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
+                    rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
                     currentFrame = 4;
                 }
             }
-            else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
+            /*else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
                 awake = 1;
                 // TODO if direction change need to adjust currentFrame
-            }
+            }*/
         }
         
         // TODO need to put this in its own movement click function I think
@@ -527,7 +543,7 @@ int main(void)
                     else if (direction == 0) {
                         position.x = ballPosition.x - 189;
                         position.y = ballPosition.y - 25*2;
-                        DrawTextureRec(rollerbotWakeLeft, rollerbotWakeRightRec, position, WHITE);
+                        DrawTextureRec(rollerbotWakeLeft, rollerbotWakeLeftRec, position, WHITE);
                     }
                 }
                 else if (awake == 2) {// idle
