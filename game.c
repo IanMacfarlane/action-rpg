@@ -27,6 +27,7 @@ int main(void)
     
     // sprite stuff
     int direction = 1;// 0 for left 1 for right
+    int prevDirection;
     Texture2D rollerbotStaticIdleRight = LoadTexture("resources/rollerbotStaticIdleRight.png");
     Texture2D rollerbotStaticIdleLeft = LoadTexture("resources/rollerbotStaticIdleLeft.png");
     
@@ -122,79 +123,34 @@ int main(void)
         }
         
         // sleep timer
-        /*if (moving == 0 && awake == 2) {
+        if (moving == 0 && awake == 2) {
             // iterate sleep timer
             sleepTimer++;
             // if timer reaches threshold set awake = 3 to start sleep animation
             if (sleepTimer == 60*1) {// sleep after 2 seconds of not moving
                 awake = 3;
                 // set starting frame for sleep animation
-                if (direction == 1) {
-                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
-                    currentFrame = 4;
-                }
-                else if (direction == 0) {
-                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
-                    currentFrame = 0;
-                }
-            }
-        }*/
-        
-        // move character position down movement path toward right click location
-        if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
-            // keep moving down path
-            if (pathPosition < pathLength-1 && awake == 2) {
-                
-                moving = 1;
-                
-                if ((pathLength-1) - pathPosition > moveSpeed) {
-                    pathPosition+=moveSpeed;
-                    ballPosition = pathArray[pathPosition];
-                }
-                else {// at end of path, avoids overflowing pathArray
-                    // TODO should probably check why pathArray[pathLength-1] != ballTarget apparently
-                    ballPosition.x = ballTarget.x;
-                    ballPosition.y = ballTarget.y;
-                    moving = 0;
-                    
-                    // reset sleep timer
-                    //sleepTimer = 0;
-                    awake = 3;
-                    // set starting frame for sleep animation
-                    framesCounter = 0;
-                    if (direction == 1) {
-                        rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeRight.width/5;
-                        currentFrame = 4;
-                    }
-                    else if (direction == 0) {
-                        rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
-                        currentFrame = 0;
-                    }
-                }
-            }
-            else if (awake == 0) {// if in static idle must first do awake animation before moving// TODO might need to put this in the animation frame loop
-                DrawText("Interrupt?", 400, 10, 20, BLACK);
-                awake = 1;
                 framesCounter = 0;
                 if (direction == 1) {
-                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
-                    currentFrame = 0;
-                }
-                else if (direction == 0) {
-                    rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
+                    rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeRight.width/5;
                     currentFrame = 4;
                 }
+                else if (direction == 0) {
+                    rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                    currentFrame = 0;
+                }
             }
-            /*else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
-                awake = 1;
-                // TODO if direction change need to adjust currentFrame
-            }*/
         }
+        
+        
         
         // TODO need to put this in its own movement click function I think
         // TODO if obstacle calculate path around obstacle
         // right click mouse movement 
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+            
+            prevDirection = direction;
+            
             ballTarget = GetMousePosition();
             pathPosition = 0;
             
@@ -501,6 +457,99 @@ int main(void)
                 }
             }
         }
+        
+        
+        // move character position down movement path toward right click location
+        if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
+            // keep moving down path
+            if (pathPosition < pathLength-1 && awake == 2) {
+                
+                moving = 1;
+                
+                // TODO should probably do the same frame adjustment as with sleep animation cancel on direction change during move
+                
+                if ((pathLength-1) - pathPosition > moveSpeed) {
+                    pathPosition+=moveSpeed;
+                    ballPosition = pathArray[pathPosition];
+                }
+                else {// at end of path, avoids overflowing pathArray
+                    // TODO should probably check why pathArray[pathLength-1] != ballTarget apparently
+                    ballPosition.x = ballTarget.x;
+                    ballPosition.y = ballTarget.y;
+                    moving = 0;
+                    
+                    // reset sleep timer
+                    sleepTimer = 0;
+                }
+            }
+            else if (awake == 0) {// if in static idle must first do awake animation before moving
+                //DrawText("Interrupt?", 400, 10, 20, BLACK);
+                awake = 1;
+                framesCounter = 0;
+                if (direction == 1) {
+                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                    currentFrame = 0;
+                }
+                else if (direction == 0) {
+                    rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
+                    currentFrame = 4;
+                }
+            }
+            else if (awake == 3) {// allow sleep animation to be interupted and reversed into a wake animation
+                awake = 1;
+                //framesCounter = 0;
+                // if direction change need to adjust currentFrame
+                if (prevDirection != direction) {
+                    //DrawText("change direction", 400, 10, 20, BLACK);
+                    if (prevDirection == 1) {
+                        if (currentFrame == 0) {
+                            rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 4;
+                        }
+                        else if (currentFrame == 1) {
+                            rollerbotWakeLeftRec.x = (float)3*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 3;
+                        }
+                        else if (currentFrame == 2) {
+                            rollerbotWakeLeftRec.x = (float)2*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 2;
+                        }
+                        else if (currentFrame == 3) {
+                            rollerbotWakeLeftRec.x = (float)1*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 1;
+                        }
+                        else if (currentFrame == 4) {
+                            rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                            currentFrame = 0;
+                        }
+                    }
+                    if (prevDirection == 0) {
+                        if (currentFrame == 0) {
+                            rollerbotWakeRightRec.x = (float)4*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 4;
+                        }
+                        else if (currentFrame == 1) {
+                            rollerbotWakeRightRec.x = (float)3*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 3;
+                        }
+                        else if (currentFrame == 2) {
+                            rollerbotWakeRightRec.x = (float)2*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 2;
+                        }
+                        else if (currentFrame == 3) {
+                            rollerbotWakeRightRec.x = (float)1*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 1;
+                        }
+                        else if (currentFrame == 4) {
+                            rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeRight.width/5;
+                            currentFrame = 0;
+                        }
+                    }
+                }
+            }
+        }
+        
+        
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -565,7 +614,7 @@ int main(void)
             
             // TODO character moves faster on 45 than on flat could do some math to make movement look the same speed at any angle?
             // TODO could have a hold right click update movement target at some rate
-            // TODO on change direction reset move animation currentFrame
+            // TODO on change direction reset move animation currentFrame and/or reset framesCounter
             // TODO on stop moving could finish move animation before switching to idle?
             
             DrawText("right click to move", 10, 10, 20, BLACK);
