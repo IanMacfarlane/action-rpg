@@ -70,7 +70,7 @@ int main(void)
     
     int framesCounter = 0;// tracks animation frames per second
     int framesSpeed = 6;// determines number of animation frames per second
-    int moveSpeed = 3;// pixels moved per frame
+    int moveSpeed = 4;// pixels moved per frame
 
     // movement variables
     Vector2 ballPosition = { screenWidth/2, screenHeight/2 }; // tracks location of feet of sprite
@@ -84,7 +84,7 @@ int main(void)
     int attack = 0;
     int sleepTimer = 0;
     int clickType = 0;
-    
+    int queueMove = 0;
     
     // TODO enemy stuff
     Vector2 enemyPosition;
@@ -104,6 +104,13 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         framesCounter++;
+        
+        if (attack == 1 || attack == 2) {// faster animation frame speed for attack animation
+            framesSpeed = 12;
+        }
+        else {
+            framesSpeed = 6;
+        }
         
         // sprite animation frame tracking
         if (framesCounter >= (60/framesSpeed)) {
@@ -174,14 +181,26 @@ int main(void)
                 if (direction == 1) {
                     if (currentFrame > 3) {
                         attack = 0;// TODO once animation finishes start attack cooldown, cooldown between animations or faster animation? if standing still attacking fill cooldown with charge animation
-                        clickType = 0;
+                        if (queueMove == 1) {
+                            clickType = 1;
+                            queueMove = 2;
+                        }
+                        else {
+                            clickType = 2;
+                        }
                     }
                     rollerbotShootRightRec.x = (float)currentFrame*(float)rollerbotShootRight.width/4;
                 }
                 else if (direction == 0) {
                     if (currentFrame < 0) {
                         attack = 0;
-                        clickType = 0;
+                        if (queueMove == 1) {
+                            clickType = 1;
+                            queueMove = 0;
+                        }
+                        else {
+                            clickType = 2;
+                        }
                     }
                     rollerbotShootLeftRec.x = (float)currentFrame*(float)rollerbotShootLeft.width/4;
                 }
@@ -533,12 +552,19 @@ int main(void)
                 // TODO if in range
                 moving = 0;
                 direction = clickDirection;
+                if (queueMove == 1) {
+                    queueMove = 0;
+                }
             }
             else if (attack == 0) {
                 // TODO allow for movement click queue during attack animation
                 clickType = 1;// move click
                 attack = 0;// if attack canceled reset attack animation
                 direction = clickDirection;
+            }
+            else if (attack == 1 || attack == 2) {
+                queueMove = 1;
+                
             }
         }
         
@@ -549,6 +575,7 @@ int main(void)
             if (pathPosition < pathLength-1 && awake == 2) {
                 
                 moving = 1;
+                if (direction != clickDirection) direction = clickDirection;
                 
                 // adjust frame on move direction change
                 if (prevDirection != direction) {
