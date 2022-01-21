@@ -106,7 +106,7 @@ int main(void)
         framesCounter++;
         
         if (attack == 1 || attack == 2) {// faster animation frame speed for attack animation
-            framesSpeed = 12;
+            framesSpeed = 12;// attack speed
         }
         else {
             framesSpeed = 6;
@@ -556,7 +556,7 @@ int main(void)
                     queueMove = 0;
                 }
             }
-            else if (attack == 0) {
+            else if (attack != 2) {// allow auto cancels while charging
                 // TODO allow for movement click queue during attack animation
                 clickType = 1;// move click
                 attack = 0;// if attack canceled reset attack animation
