@@ -174,7 +174,7 @@ int main(void)
                     rollerbotChargeLeftRec.x = (float)currentFrame*(float)rollerbotChargeLeft.width/4;
                 }                
             }
-            else if (attack == 2) {// shoot animation
+            else if (attack == 2) {// shoot animation TODO projectile animation that travels to target
                 if (direction == 1) currentFrame++;
                 else if (direction == 0) currentFrame--;
                 
@@ -549,7 +549,7 @@ int main(void)
                 ballTarget.x = enemyPosition.x + eyeballMonster.width/2;
                 ballTarget.y = enemyPosition.y + eyeballMonster.height/2;
                 clickType = 2;// attack click
-                // TODO if in range
+                // TODO if in range if not in range move to in range
                 moving = 0;
                 direction = clickDirection;
                 if (queueMove == 1) {
@@ -557,10 +557,10 @@ int main(void)
                 }
             }
             else if (attack != 2) {// allow auto cancels while charging
-                // TODO allow for movement click queue during attack animation
                 clickType = 1;// move click
                 attack = 0;// if attack canceled reset attack animation
                 direction = clickDirection;
+                // TODO bug where sprite jitters on same location click
             }
             else if (attack == 1 || attack == 2) {
                 queueMove = 1;
