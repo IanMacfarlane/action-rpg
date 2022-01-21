@@ -20,13 +20,15 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     // screen sizes: 800,450 1600,900 1920,1080
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1600;
+    const int screenHeight = 900;
 
     InitWindow(screenWidth, screenHeight, "Game (in progress)");
     
+    // TODO should probably make textures bigger for when the game is full screen
     // sprite stuff
     int direction = 1;// 0 for left 1 for right
+    int clickDirection;
     int prevDirection;
     Texture2D rollerbotStaticIdleRight = LoadTexture("resources/rollerbotStaticIdleRight.png");
     Texture2D rollerbotStaticIdleLeft = LoadTexture("resources/rollerbotStaticIdleLeft.png");
@@ -40,6 +42,15 @@ int main(void)
     Texture2D rollerbotMoveRight = LoadTexture("resources/rollerbotMoveRight.png");
     Texture2D rollerbotMoveLeft = LoadTexture("resources/rollerbotMoveLeft.png");
     
+    Texture2D rollerbotChargeRight = LoadTexture("resources/rollerbotChargeRight.png");
+    Texture2D rollerbotChargeLeft = LoadTexture("resources/rollerbotChargeLeft.png");
+    
+    Texture2D rollerbotShootRight = LoadTexture("resources/rollerbotShootRight.png");
+    Texture2D rollerbotShootLeft = LoadTexture("resources/rollerbotShootLeft.png");
+    
+    Texture2D eyeballMonster = LoadTexture("resources/eyeballMonster.png");
+    Rectangle eyeballMonsterRec = { 0.0f, 0.0f, (float)eyeballMonster.width, (float)eyeballMonster.height };
+    
     
     Vector2 position;// tracks top left of sprite textures
     // TODO may not need a rec for each direction
@@ -49,6 +60,11 @@ int main(void)
     
     Rectangle rollerbotWakeRightRec = { 0.0f, 0.0f, (float)rollerbotWakeRight.width/5, (float)rollerbotWakeRight.height };
     Rectangle rollerbotWakeLeftRec = { 0.0f, 0.0f, (float)rollerbotWakeRight.width/5, (float)rollerbotWakeLeft.height };
+    
+    Rectangle rollerbotChargeRightRec = { 0.0f, 0.0f, (float) rollerbotChargeRight.width/4, (float)rollerbotChargeRight.height };
+    Rectangle rollerbotShootRightRec = { 0.0f, 0.0f, (float) rollerbotShootRight.width/4, (float)rollerbotShootRight.height };
+    Rectangle rollerbotChargeLeftRec = { 0.0f, 0.0f, (float) rollerbotChargeLeft.width/4, (float)rollerbotChargeLeft.height };
+    Rectangle rollerbotShootLeftRec = { 0.0f, 0.0f, (float) rollerbotShootLeft.width/4, (float)rollerbotShootLeft.height };
     
     int currentFrame = 0;// tracks animation frame
     
@@ -64,8 +80,20 @@ int main(void)
     int pathPosition;// track int location on pathArray while moving
     
     int moving = 0;// 0 for not moving, 1 for moving
-    int awake = 0;// 0 for sleeping in static idle 1 for in wake animation 2 for finished animation and is now idle 3 for in sleep animation
+    int awake = 2;// 0 for sleeping in static idle 1 for in wake animation 2 for finished animation and is now idle 3 for in sleep animation
+    int attack = 0;
     int sleepTimer = 0;
+    int clickType = 0;
+    
+    
+    // TODO enemy stuff
+    Vector2 enemyPosition;
+    int enemySize = 40;
+    enemyPosition.x = screenWidth - enemySize - 40;
+    enemyPosition.y = screenHeight - enemySize - 40;
+        
+    // TODO probably need some sort of entity class to track sprite locations and hitboxes for collision detection and so that number of entities can be dynamic
+        
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -120,6 +148,44 @@ int main(void)
                     rollerbotWakeLeftRec.x = (float)currentFrame*(float)rollerbotWakeLeft.width/5;
                 }
             }
+            else if (attack == 1) {// charge animation
+                if (direction == 1) currentFrame++;
+                else if (direction == 0) currentFrame--;
+                
+                if (direction == 1) {
+                    if (currentFrame > 3) {
+                        attack = 2;// once animation finishes attack = 2
+                        currentFrame = 0;
+                    }
+                    rollerbotChargeRightRec.x = (float)currentFrame*(float)rollerbotChargeRight.width/4;
+                }
+                else if (direction == 0) {
+                    if (currentFrame < 0) {
+                        attack = 2;
+                        currentFrame = 3;
+                    }
+                    rollerbotChargeLeftRec.x = (float)currentFrame*(float)rollerbotChargeLeft.width/4;
+                }                
+            }
+            else if (attack == 2) {// shoot animation
+                if (direction == 1) currentFrame++;
+                else if (direction == 0) currentFrame--;
+                
+                if (direction == 1) {
+                    if (currentFrame > 3) {
+                        attack = 0;// TODO once animation finishes start attack cooldown, cooldown between animations or faster animation? if standing still attacking fill cooldown with charge animation
+                        clickType = 0;
+                    }
+                    rollerbotShootRightRec.x = (float)currentFrame*(float)rollerbotShootRight.width/4;
+                }
+                else if (direction == 0) {
+                    if (currentFrame < 0) {
+                        attack = 0;
+                        clickType = 0;
+                    }
+                    rollerbotShootLeftRec.x = (float)currentFrame*(float)rollerbotShootLeft.width/4;
+                }
+            }
         }
         
         // sleep timer
@@ -128,7 +194,7 @@ int main(void)
             sleepTimer++;
             // if timer reaches threshold set awake = 3 to start sleep animation
             if (sleepTimer == 60*1) {// sleep after 2 seconds of not moving
-                awake = 3;
+                /*awake = 3;
                 // set starting frame for sleep animation
                 framesCounter = 0;
                 if (direction == 1) {
@@ -138,7 +204,7 @@ int main(void)
                 else if (direction == 0) {
                     rollerbotWakeLeftRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
                     currentFrame = 0;
-                }
+                }*/
             }
         }
         
@@ -151,10 +217,11 @@ int main(void)
             
             prevDirection = direction;
             
-            ballTarget = GetMousePosition();
+            ballTarget = GetMousePosition();// TODO should rename this to clickLoction or something
             pathPosition = 0;
             
             if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
+                
                 // calculate straight line path between ballTarget and ballPosition and move ball down the line
                 int width = abs(ballTarget.x - ballPosition.x);
                 int height = abs(ballTarget.y - ballPosition.y);
@@ -370,7 +437,7 @@ int main(void)
                     
                     // fill array with points on path
                     if (ballPosition.x - ballTarget.x > 0 && ballPosition.y - ballTarget.y > 0) {// move up and left
-                        direction = 0;
+                        clickDirection = 0;
                         if (pathLength == height) {// moving in y direction
                             pen.y--;
                             if (lengthsArray[currentLength] == 0) {
@@ -387,7 +454,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x < 0 && ballPosition.y - ballTarget.y > 0) {// move up and right
-                        direction = 1;
+                        clickDirection = 1;
                         if (pathLength == height) {// moving in y direction
                             pen.y--;
                             if (lengthsArray[currentLength] == 0) {
@@ -404,7 +471,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x < 0 && ballPosition.y - ballTarget.y < 0) {//move down and right
-                        direction = 1;
+                        clickDirection = 1;
                         if (pathLength == height) {// moving in y direction
                             pen.y++;
                             if (lengthsArray[currentLength] == 0) {
@@ -421,7 +488,7 @@ int main(void)
                         }
                     }
                     else if (ballPosition.x - ballTarget.x > 0 && ballPosition.y - ballTarget.y < 0) {//move down and left
-                        direction = 0;
+                        clickDirection = 0;
                         if (pathLength == height) {// moving in y direction
                             pen.y++;
                             if (lengthsArray[currentLength] == 0) {
@@ -446,21 +513,38 @@ int main(void)
                             pen.y++;
                         }
                         else if (pathLength == width && ballTarget.x < ballPosition.x) {// left
-                            direction = 0;
+                            clickDirection = 0;
                             pen.x--;
                         }
                         else if (pathLength == width && ballTarget.x > ballPosition.x) {// right
-                            direction = 1;
+                            clickDirection = 1;
                             pen.x++;
                         }
                     }
                 }
             }
+            
+            // check if click on enemy, TODO will definitly need to make this its own function that checks if any spawned entities were clicked
+            if ((ballTarget.x >= enemyPosition.x && ballTarget.x <= enemyPosition.x + eyeballMonster.width) && (ballTarget.y >= enemyPosition.y && ballTarget.y <= enemyPosition.y + eyeballMonster.height)) {
+                // on enemy click set ballTarget to center of enemy, TODO direction can still change because it is with click location set before this
+                ballTarget.x = enemyPosition.x + eyeballMonster.width/2;
+                ballTarget.y = enemyPosition.y + eyeballMonster.height/2;
+                clickType = 2;// attack click
+                // TODO if in range
+                moving = 0;
+                direction = clickDirection;
+            }
+            else if (attack == 0) {
+                // TODO allow for movement click queue during attack animation
+                clickType = 1;// move click
+                attack = 0;// if attack canceled reset attack animation
+                direction = clickDirection;
+            }
         }
         
         
         // move character position down movement path toward right click location
-        if (!(ballTarget.x == ballPosition.x && ballTarget.y == ballPosition.y)) {
+        if (clickType == 1) {
             // keep moving down path
             if (pathPosition < pathLength-1 && awake == 2) {
                 
@@ -548,6 +632,7 @@ int main(void)
                     ballPosition.y = ballTarget.y;
                     
                     moving = 0;
+                    clickType = 0;
                     currentFrame = 0;// after stoping reset move frame so that movement always starts on first frame
                     rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeRight.width/5;
                     
@@ -557,6 +642,7 @@ int main(void)
             }
             else if (awake == 0) {// if in static idle must first do awake animation before moving
                 // TODO on direction change while asleep could display animation frame of changed direction before wake animation?
+                // TODO if spam click back and forth can get stuck in animation
                 awake = 1;
                 framesCounter = 0;
                 if (direction == 1) {
@@ -619,62 +705,134 @@ int main(void)
                 }
             }
         }
+        else if (clickType == 2) {
+            
+            if (awake != 2) {// TODO if not awake must wake animation before attacking
+                /*awake = 1;
+                framesCounter = 0;
+                if (direction == 1) {
+                    rollerbotWakeRightRec.x = (float)0*(float)rollerbotWakeLeft.width/5;
+                    currentFrame = 0;
+                }
+                else if (direction == 0) {
+                    rollerbotWakeLeftRec.x = (float)4*(float)rollerbotWakeLeft.width/5;// sets starting frame for wake left
+                    currentFrame = 4;
+                }*/
+            }
+            else if (attack == 0) {// if attack click switch to attack animation
+                // TODO if out of attack range move to attack range and attack
+                // TODO check if attack is on cooldown
+                framesCounter = 0;
+                attack = 1;// attack is charging
+                if (direction == 1) {
+                    currentFrame = 0;
+                    rollerbotChargeRightRec.x = (float)0*(float)rollerbotChargeRight.width/4;
+                    rollerbotShootRightRec.x = (float)0*(float)rollerbotShootRight.width/4;
+                }
+                else if (direction == 0) {
+                    currentFrame = 3;
+                    rollerbotChargeLeftRec.x = (float)3*(float)rollerbotChargeLeft.width/4;
+                    rollerbotShootLeftRec.x = (float)3*(float)rollerbotShootLeft.width/4;
+                }
+            }
+            // TODO need to figure out attack cancelling and attack speed, may want to speed up attack animation frames?
+            // TODO cant cancel shoot animation but can cancel charge animation
+            // if click on enemy check attack range
+            // if in range attack
+            // if not in range move to in range and attack
+        }
+        
         
         
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
+        Vector2 rollerbotTextureOffsetRight;
+        Vector2 rollerbotTextureOffsetLeft;
+        rollerbotTextureOffsetRight.x = 22*2*2;
+        rollerbotTextureOffsetRight.y = 25*2*2;
+        rollerbotTextureOffsetLeft.x = 189*2;
+        rollerbotTextureOffsetLeft.y = 25*2*2;
+        
         BeginDrawing();
 
             ClearBackground(DARKGRAY);
             
+            // draw enemy
+            //DrawRectangle(enemyPosition.x, enemyPosition.y, enemySize, enemySize, BLACK);
+            DrawTextureRec(eyeballMonster, eyeballMonsterRec, enemyPosition, WHITE);
+            
             if (moving == 1) {// move animation
                 if (direction == 1) {// right
-                    position.x = ballPosition.x - 22*2;
-                    position.y = ballPosition.y - 25*2;
+                    position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                    position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
                     DrawTextureRec(rollerbotMoveRight, rollerbotMoveRightRec, position, WHITE);
                 }
                 else if (direction == 0) {// left
-                    position.x = ballPosition.x - 189;
-                    position.y = ballPosition.y - 25*2;
+                    position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                    position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
                     DrawTextureRec(rollerbotMoveLeft, rollerbotMoveLeftRec, position, WHITE);
                 }
             }
             else if (moving == 0) {
                 if (awake == 0) {// static idle
                     if (direction == 1) {
-                        position.x = ballPosition.x - 22*2;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
                         DrawTextureRec(rollerbotStaticIdleRight, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                     else if (direction == 0) {
-                        position.x = ballPosition.x - 189;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
                         DrawTextureRec(rollerbotStaticIdleLeft, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                 }
                 else if (awake == 1 || awake == 3) {// wake animation
                     if (direction == 1) {
-                        position.x = ballPosition.x - 22*2;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
                         DrawTextureRec(rollerbotWakeRight, rollerbotWakeRightRec, position, WHITE);
                     }
                     else if (direction == 0) {
-                        position.x = ballPosition.x - 189;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
                         DrawTextureRec(rollerbotWakeLeft, rollerbotWakeLeftRec, position, WHITE);
+                    }
+                }
+                else if (attack == 1) {
+                    if (direction == 1) {
+                        position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
+                        DrawTextureRec(rollerbotChargeRight, rollerbotChargeRightRec, position, WHITE);
+                    }
+                    else if (direction == 0) {
+                        position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
+                        DrawTextureRec(rollerbotChargeLeft, rollerbotChargeLeftRec, position, WHITE);
+                    }
+                }
+                else if (attack == 2) {
+                    if (direction == 1) {
+                        position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
+                        DrawTextureRec(rollerbotShootRight, rollerbotShootRightRec, position, WHITE);
+                    }
+                    else if (direction == 0) {
+                        position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
+                        DrawTextureRec(rollerbotShootLeft, rollerbotShootLeftRec, position, WHITE);
                     }
                 }
                 else if (awake == 2) {// idle
                     if (direction == 1) {
-                        position.x = ballPosition.x - 22*2;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetRight.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetRight.y;
                         DrawTextureRec(rollerbotIdleRight, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                     else if (direction == 0) {
-                        position.x = ballPosition.x - 189;
-                        position.y = ballPosition.y - 25*2;
+                        position.x = ballPosition.x - rollerbotTextureOffsetLeft.x;
+                        position.y = ballPosition.y - rollerbotTextureOffsetLeft.y;
                         DrawTextureRec(rollerbotIdleLeft, rollerbotStaticIdleRightRec, position, WHITE);
                     }
                 }
@@ -704,6 +862,12 @@ int main(void)
     
     UnloadTexture(rollerbotMoveRight);
     UnloadTexture(rollerbotMoveLeft);
+    
+    UnloadTexture(rollerbotChargeRight);
+    UnloadTexture(rollerbotChargeLeft);
+    
+    UnloadTexture(rollerbotShootRight);
+    UnloadTexture(rollerbotShootLeft);
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
